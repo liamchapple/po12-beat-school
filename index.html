@@ -76,6 +76,10 @@ h1 span{color:var(--led)}
 .key.util{gap:5px}
 .key.util .recdot{width:10px;height:10px;border-radius:50%;background:#7a2a18}
 .key.util.recording{color:var(--led);box-shadow:0 1px 0 #0a0d0c,0 0 0 2px var(--led),0 0 14px var(--led-soft)}
+.key.util.ready{color:var(--ok);box-shadow:0 1px 0 #0a0d0c,0 0 0 2px var(--ok)}
+.key.util.ready .recdot{background:var(--ok)}
+.flash2{animation:pulse2 1s ease-out 2}
+@keyframes pulse2{0%{box-shadow:0 0 0 0 var(--led)}100%{box-shadow:0 0 0 10px transparent}}
 .key.util.recording .recdot{background:var(--led);box-shadow:0 0 8px var(--led);animation:blink 1s steps(2) infinite}
 .pad{aspect-ratio:1;display:grid;place-items:center}
 .pad::before{content:"";width:12px;height:12px;border-radius:50%;border:2px solid var(--copper);opacity:.35}
@@ -220,7 +224,7 @@ footer{max-width:1000px;margin:26px auto 0;color:var(--silk-dim);font-size:12px}
           <button class="btn" type="button" id="btnHear" hidden>Play render</button>
           <a class="btn primary" id="dlLink" hidden>Download WAV</a>
         </div>
-        <p class="devnote small">To capture a jam with FX punch-ins, tap the <b>REC</b> key on the device, play, then tap it again to stop and save. Up to 3 minutes.</p>
+        <p class="devnote small">To capture a jam with FX punch-ins, tap the <b>REC</b> key on the device and play. Tap it again to stop, then tap <b>SAVE</b> to download the WAV. Up to 3 minutes.</p>
         <p class="devnote small savestat" id="saveStat" aria-live="polite">Checking whether saving is available here...</p>
         <div class="actions" id="permRow" hidden><button class="btn" type="button" id="btnPerm">Allow saving files</button></div>
         <p class="devnote small" id="exMsg" aria-live="polite">Renders the current pattern or chain with your tempo, swing, sound settings, locks and retrigs. Live FX punch-ins are not included. Then tap Download to save the WAV.</p>
@@ -249,7 +253,7 @@ footer{max-width:1000px;margin:26px auto 0;color:var(--silk-dim);font-size:12px}
     </details>
   </section>
 </div>
-<footer>Unofficial practice tool. Sounds and effects are synthesized approximations of the PO-12, so use your ears on the real thing. Layout of the function keys is simplified. <span id="build">Standalone build 14</span></footer>
+<footer>Unofficial practice tool. Sounds and effects are synthesized approximations of the PO-12, so use your ears on the real thing. Layout of the function keys is simplified. <span id="build">Standalone build 15</span></footer>
 
 <script>
 (function(){
@@ -511,7 +515,7 @@ grid.addEventListener("pointerdown",e=>{
   const b=e.target.closest(".key");if(!b)return;e.preventDefault();
   try{b.setPointerCapture(e.pointerId)}catch(_){}
   b.classList.add("down");const k=b.dataset.k;initAudio();
-  if(k==="rec"){rec?stopRec():startRec();return}
+  if(k==="rec"){recKey();return}
   if(k==="play"){st.playing?stop():start();return}
   if(MODS.includes(k)){const m=mods[k];
     if(m.latched){m.latched=false;m.rel=true;releaseMod(k);renderLcd();return}
@@ -541,7 +545,7 @@ grid.addEventListener("contextmenu",e=>e.preventDefault());
 grid.addEventListener("keydown",e=>{ // keyboard: Enter/Space acts like a quick tap
   const b=e.target.closest(".key");if(!b||(e.key!=="Enter"&&e.key!==" "))return;e.preventDefault();
   const k=b.dataset.k;initAudio();
-  if(k==="rec"){rec?stopRec():startRec()}
+  if(k==="rec"){recKey()}
   else if(k==="play"){st.playing?stop():start()}
   else if(MODS.includes(k)){const m=mods[k];if(m.latched){m.latched=false;releaseMod(k)}else if(e.shiftKey){m.latched=true;m.used=false;pressMod(k)}else tapMod(k)}
   else{const i=+k.slice(1);if(st.write&&!MODS.some(held))toggleStep(i);else pressNum(i)}
@@ -906,7 +910,7 @@ async function saveWav(buf,suffix,rendered){
     const a=$("dlLink");if(a.dataset.url)URL.revokeObjectURL(a.dataset.url);
     const url=URL.createObjectURL(new Blob([toWav(buf)],{type:"audio/wav"}));
     a.href=url;a.dataset.url=url;a.download=name+".wav";a.textContent="Download "+name+".wav";a.hidden=false;
-    msgEl.textContent=what+" "+secs+" seconds. Tap the Download button to save the WAV.";
+    msgEl.textContent=what+" "+secs+" seconds. "+(rendered?"Tap the Download button to save the WAV.":"Tap SAVE on the device, or the Download button here, to save the WAV.");
     ev(rendered?"exportWav":"recordWav");return}
   msgEl.textContent=what+" "+secs+" seconds. Confirm the save to download.";
   try{
@@ -927,7 +931,16 @@ async function saveWav(buf,suffix,rendered){
   }
 }
 /* live recorder: taps the final output, FX and all */
-function recUI(on){const k=keyEls.rec;k.classList.toggle("recording",on);k.querySelector(".reclab").textContent=on?"stop":"rec";renderLcd()}
+let takeReady=false;
+function recKey(){
+  if(rec){stopRec();return}
+  if(takeReady){const a=$("dlLink");takeReady=false;keyEls.rec.classList.remove("ready");keyEls.rec.querySelector(".reclab").textContent="rec";
+    if(a&&a.href){a.click();say("saving take",1400)}return}
+  startRec();
+}
+function takeSaved(){takeReady=true;const k=keyEls.rec;k.classList.add("ready");k.querySelector(".reclab").textContent="save";say("tap save for wav",2500);
+  const a=$("dlLink");if(a){a.classList.remove("flash2");void a.offsetWidth;a.classList.add("flash2")}}
+function recUI(on){if(on){takeReady=false;keyEls.rec.classList.remove("ready")}const k=keyEls.rec;k.classList.toggle("recording",on);k.querySelector(".reclab").textContent=on?"stop":"rec";renderLcd()}
 function recClock(){if(!rec)return "";const s=Math.floor((performance.now()-rec.t0)/1000);return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")}
 function startRec(){
   initAudio();if(!ctx){$("exMsg").textContent="Audio is not available in this browser.";return}
@@ -950,7 +963,7 @@ function stopRec(){
     const buf=ctx.createBuffer(2,r.frames,ctx.sampleRate);
     let o=0;for(let i=0;i<r.L.length;i++){const n=Math.min(r.L[i].length,r.frames-o);buf.getChannelData(0).set(r.L[i].subarray(0,n),o);buf.getChannelData(1).set(r.R[i].subarray(0,n),o);o+=n}
     lastRender=buf;$("btnHear").hidden=false;
-    await saveWav(buf,"-live",false);
+    await saveWav(buf,"-live",false);takeSaved();
   },600);
 }
 
