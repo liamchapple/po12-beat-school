@@ -1,0 +1,972 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>PO-12 Beat School</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Martian+Mono:wght@400;600;800&family=VT323&display=swap">
+<style>
+/* Layout: bare circuit board on the left (the instrument), a field notebook of missions on the right; stacks on phones. Single committed dark look. */
+:root{
+  color-scheme: dark;
+  --ground:#0e1311;
+  --pcb:#16201c;
+  --pcb-edge:#22302a;
+  --silk:#e8ebe2;
+  --silk-dim:#8f9a92;
+  --copper:#c79b45;
+  --lcd:#aeb8a0;
+  --lcd-ink:#1b2117;
+  --key:#2b302d;
+  --key-hi:#3a413c;
+  --led:#ff6a2b;
+  --led-soft:rgba(255,106,43,.22);
+  --ok:#7fd18b;
+  --paper:#18201c;
+  --line:#2c3832;
+  --f-silk:"Martian Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --f-body:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-lcd:"VT323", ui-monospace, Menlo, monospace;
+}
+html,body{background:var(--ground);color:var(--silk)}
+body{font-family:var(--f-body);font-size:15px;line-height:1.5;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:1000px;margin:0 auto;display:grid;grid-template-columns:minmax(0,400px) minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:820px){.wrap{grid-template-columns:minmax(0,1fr);max-width:440px}}
+header.top{max-width:1000px;margin:0 auto 18px;display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px 16px}
+h1{font-family:var(--f-silk);font-weight:800;font-size:clamp(20px,4vw,26px);letter-spacing:-.01em;margin:0;text-wrap:balance}
+h1 span{color:var(--led)}
+.sub{color:var(--silk-dim);font-size:13px;margin:0}
+
+/* device */
+.device{background:var(--pcb);border:1px solid var(--pcb-edge);border-radius:14px;padding:14px;position:relative;box-shadow:0 20px 50px rgba(0,0,0,.45), inset 0 0 0 4px rgba(199,155,69,.06);touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.device::before,.device::after{content:"";position:absolute;width:10px;height:10px;border-radius:50%;border:2px solid var(--copper);opacity:.55;top:8px}
+.device::before{left:8px}.device::after{right:8px}
+.grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px}
+.lcd{grid-column:1 / span 3;background:var(--lcd);color:var(--lcd-ink);border-radius:6px;padding:6px 9px 7px;font-family:var(--f-lcd);box-shadow:inset 0 2px 6px rgba(0,0,0,.35);min-height:108px;display:flex;flex-direction:column;justify-content:space-between}
+.lcd .row1{display:flex;justify-content:space-between;font-size:18px;line-height:1}
+.lcd .rec{visibility:hidden;background:var(--lcd-ink);color:var(--lcd);padding:0 3px}
+.lcd .rec.on{visibility:visible}
+.lcd .big{font-size:25px;line-height:1.02;text-transform:uppercase;min-height:52px;overflow-wrap:anywhere}
+.lcd .mini{display:grid;grid-template-columns:repeat(16,1fr);gap:2px}
+.lcd .mini i{height:5px;background:rgba(27,33,23,.18)}
+.lcd .mini i.n{background:rgba(27,33,23,.6)}
+.lcd .mini i.p{background:var(--lcd-ink);transform:scaleY(1.6)}
+.knobs{grid-column:4 / span 2;display:flex;justify-content:space-around;align-items:center}
+.knobw{display:flex;flex-direction:column;align-items:center;gap:4px}
+.knob{width:46px;height:46px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4a524d,#1f2421 70%);border:2px solid #0b0f0d;position:relative;cursor:ns-resize;touch-action:none}
+.knob::after{content:"";position:absolute;left:50%;top:4px;width:3px;height:13px;margin-left:-1.5px;background:var(--silk);border-radius:2px;transform-origin:50% 19px;transform:rotate(var(--r,0deg))}
+.knob:focus-visible{outline:2px solid var(--led);outline-offset:3px}
+.lab{font-family:var(--f-silk);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--silk-dim)}
+.key{position:relative;aspect-ratio:1;max-width:100%;border-radius:9px;background:var(--key);border:1px solid #0a0d0c;box-shadow:0 3px 0 #0a0d0c, inset 0 1px 0 rgba(255,255,255,.07);color:var(--silk);font-family:var(--f-silk);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0;touch-action:none;transition:transform .04s}
+.key:focus-visible{outline:2px solid var(--led);outline-offset:2px}
+.key.down{transform:translateY(2px);box-shadow:0 1px 0 #0a0d0c;background:var(--key-hi)}
+.key .num{font-size:15px;font-weight:600}
+.key .s{position:absolute;top:4px;left:6px;font-size:8px;color:var(--silk-dim);letter-spacing:.04em}
+.key .f{position:absolute;bottom:4px;right:6px;font-size:8px;color:var(--copper);letter-spacing:.04em}
+.key .led{position:absolute;top:5px;right:6px;width:7px;height:7px;border-radius:50%;background:#3b2a22}
+.key.lit .led{background:var(--led);box-shadow:0 0 8px var(--led)}
+.key.ph{background:#38403b}
+.key.ph .led{background:#ffd0b8;box-shadow:0 0 10px #ffd0b8}
+.key.fn{font-size:9px;letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+.key.fn.held{background:#3b2a22;color:#ffd9c7;box-shadow:0 1px 0 #0a0d0c, 0 0 0 2px var(--led), 0 0 14px var(--led-soft)}
+.key.fn.held::after{content:"HOLD";position:absolute;bottom:3px;font-size:7px;color:var(--led)}
+.key.stepheld{box-shadow:0 1px 0 #0a0d0c,0 0 0 2px var(--copper)}
+.key.on-state{color:var(--led)}
+.key.util{gap:5px}
+.key.util .recdot{width:10px;height:10px;border-radius:50%;background:#7a2a18}
+.key.util.recording{color:var(--led);box-shadow:0 1px 0 #0a0d0c,0 0 0 2px var(--led),0 0 14px var(--led-soft)}
+.key.util.recording .recdot{background:var(--led);box-shadow:0 0 8px var(--led);animation:blink 1s steps(2) infinite}
+.pad{aspect-ratio:1;display:grid;place-items:center}
+.pad::before{content:"";width:12px;height:12px;border-radius:50%;border:2px solid var(--copper);opacity:.35}
+.devnote{margin:12px 2px 0;font-size:12.5px;color:var(--silk-dim)}
+.devnote b{color:var(--silk)}
+.vol{display:flex;align-items:center;gap:10px;margin-top:12px}
+.vol input{flex:1;min-width:0;accent-color:var(--led);height:28px}
+.vol #volVal{min-width:2ch;text-align:right;color:var(--silk);font-variant-numeric:tabular-nums}
+.devnote.small{font-size:12px;margin-top:6px}
+.beats{margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
+.beats h3{margin:0 0 8px;font-size:10px}
+.saverow{display:flex;gap:8px}
+.saverow input,.codebox textarea{flex:1;min-width:0;background:var(--pcb);border:1px solid var(--line);border-radius:6px;color:var(--silk);font:inherit;font-size:14px;padding:8px 10px}
+.codebox textarea{width:100%;box-sizing:border-box;margin-top:10px;font-family:var(--f-silk);font-size:11px;resize:vertical}
+.saverow input:focus-visible,.codebox textarea:focus-visible{outline:2px solid var(--led);outline-offset:1px}
+.blist{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.blist li{display:flex;align-items:center;gap:8px;background:var(--pcb);border:1px solid var(--line);border-radius:8px;padding:7px 8px 7px 11px}
+.blist .bn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.blist .bd{font-family:var(--f-silk);font-size:10px;color:var(--silk-dim);white-space:nowrap}
+.blist .btn{padding:5px 8px}
+.blist .empty{color:var(--silk-dim);font-size:13px;background:transparent;border-style:dashed}
+.export{margin-top:14px}
+.export h3{margin:0 0 8px;font-size:10px}
+.exrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.exrow select{background:var(--pcb);color:var(--silk);border:1px solid var(--line);border-radius:6px;font:inherit;font-size:13px;padding:6px 8px}
+.exrow select:focus-visible{outline:2px solid var(--led);outline-offset:1px}
+.savestat{color:var(--silk)}
+#dlLink{text-decoration:none;display:inline-block}
+.savestat.bad{color:var(--copper)}
+.recrow{margin-top:10px}
+.btn.rec{display:inline-flex;align-items:center;gap:8px}
+.btn.rec .dot{width:9px;height:9px;border-radius:50%;background:#7a2a18}
+.btn.rec[aria-pressed="true"]{border-color:var(--led);color:var(--led)}
+.btn.rec[aria-pressed="true"] .dot{background:var(--led);box-shadow:0 0 8px var(--led);animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:.25}}
+.rectime{color:var(--silk);font-size:12px;font-variant-numeric:tabular-nums}
+.codebox{margin-top:12px}
+.codebox summary{cursor:pointer;font-size:13px;color:var(--silk-dim)}
+.devtools{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.btn{font-family:var(--f-silk);font-size:11px;letter-spacing:.04em;background:transparent;color:var(--silk);border:1px solid var(--line);border-radius:6px;padding:7px 10px;cursor:pointer}
+.btn:hover{border-color:var(--silk-dim)}
+.btn:focus-visible{outline:2px solid var(--led);outline-offset:2px}
+.btn.primary{background:var(--led);border-color:var(--led);color:#1a0d06;font-weight:600}
+
+/* missions */
+.book{min-width:0}
+.tabs{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:6px;margin-bottom:14px}
+.tab{font-family:var(--f-silk);font-size:10.5px;text-align:left;background:transparent;border:1px solid var(--line);color:var(--silk-dim);border-radius:8px;padding:8px 9px;cursor:pointer;line-height:1.3}
+.tab b{display:block;font-size:10px;color:var(--copper);font-weight:600;margin-bottom:2px}
+.tab[aria-selected="true"]{border-color:var(--silk);color:var(--silk);background:var(--paper)}
+.tab:focus-visible{outline:2px solid var(--led);outline-offset:2px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px}
+.meta{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+.eyebrow{font-family:var(--f-silk);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--silk-dim)}
+.pill{font-family:var(--f-silk);font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:99px;border:1px solid var(--line);color:var(--silk-dim);white-space:nowrap}
+.pill.ok{border-color:var(--ok);color:var(--ok)}
+.card h2{font-family:var(--f-silk);font-size:18px;font-weight:800;margin:0 0 8px;text-wrap:balance;letter-spacing:-.01em}
+.card p{margin:0 0 10px;max-width:62ch}
+kbd{font-family:var(--f-silk);font-size:11px;background:var(--key);border:1px solid #0a0d0c;border-bottom-width:2px;border-radius:4px;padding:1px 5px;color:var(--silk);white-space:nowrap}
+.why{font-size:13.5px;color:var(--silk-dim);border-left:2px solid var(--copper);padding-left:10px}
+.hint{font-size:13.5px;background:rgba(199,155,69,.08);border-radius:8px;padding:9px 11px}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.dots{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.dot{width:26px;height:26px;border-radius:6px;border:1px solid var(--line);background:transparent;color:var(--silk-dim);font-family:var(--f-silk);font-size:10px;cursor:pointer;font-variant-numeric:tabular-nums}
+.dot.done{background:rgba(127,209,139,.15);border-color:var(--ok);color:var(--ok)}
+.dot.cur{border-color:var(--silk);color:var(--silk)}
+.dot:focus-visible{outline:2px solid var(--led);outline-offset:2px}
+.card.win{border-color:var(--ok)}
+.tempo{font-family:var(--f-silk);font-size:11px;letter-spacing:.04em;color:var(--copper);margin:-2px 0 8px!important}
+.recipe{display:flex;flex-direction:column;gap:3px;margin:4px 0 6px}
+.recipe .rh,.recipe .rr{display:grid;grid-template-columns:44px repeat(16,minmax(0,1fr));gap:2px;align-items:center}
+.recipe .rh span{font-family:var(--f-silk);font-size:7.5px;color:var(--silk-dim);text-align:center;font-variant-numeric:tabular-nums}
+.recipe .rh span.beat{color:var(--silk)}
+.recipe .rl{font-family:var(--f-silk);font-size:9px;color:var(--silk-dim);white-space:nowrap;overflow:hidden}
+.recipe i{display:block;aspect-ratio:1;border-radius:3px;background:var(--pcb);border:1px solid var(--line)}
+.recipe i.beat{border-color:#3d4b44}
+.recipe i.on{background:var(--led);border-color:var(--led)}
+.legend{font-size:12px;color:var(--silk-dim);margin:0 0 10px!important}
+.drill .q{font-family:var(--f-silk);font-size:17px;font-weight:600;min-height:52px;margin:6px 0 10px}
+.drill .stats{display:flex;gap:18px;font-family:var(--f-silk);font-size:12px;color:var(--silk-dim);font-variant-numeric:tabular-nums}
+.drill .stats b{color:var(--silk);font-size:20px;display:block}
+.flash{animation:fl .5s}
+@keyframes fl{0%{background:rgba(127,209,139,.25)}100%{background:var(--paper)}}
+.ref{margin-top:18px}
+.ref summary{cursor:pointer;font-family:var(--f-silk);font-size:12px;color:var(--silk-dim)}
+.ref table{border-collapse:collapse;width:100%;font-size:13px;margin-top:8px}
+.ref td{border-top:1px solid var(--line);padding:6px 4px;vertical-align:top}
+.ref td:first-child{white-space:nowrap;padding-right:12px}
+.tblw{overflow-x:auto}
+footer{max-width:1000px;margin:26px auto 0;color:var(--silk-dim);font-size:12px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<style>body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
+<header class="top">
+  <h1>PO-12 <span>Beat School</span></h1>
+  <p class="sub">Practice the real button moves, then do them on your device.</p>
+</header>
+
+<div class="wrap">
+  <section aria-label="Practice device">
+    <div class="device" id="device">
+      <div class="grid" id="grid">
+        <div class="lcd" aria-live="polite">
+          <div class="row1"><span id="lcdPat">P01</span><span class="rec" id="lcdRec">REC</span><span id="lcdBpm">120</span></div>
+          <div class="big" id="lcdBig">press play</div>
+          <div class="mini" id="lcdMini"></div>
+        </div>
+        <div class="knobs">
+          <div class="knobw"><div class="knob" id="knobA" tabindex="0" role="slider" aria-label="Knob A" aria-valuemin="0" aria-valuemax="100"></div><span class="lab">A</span></div>
+          <div class="knobw"><div class="knob" id="knobB" tabindex="0" role="slider" aria-label="Knob B" aria-valuemin="0" aria-valuemax="100"></div><span class="lab">B</span></div>
+        </div>
+      </div>
+    </div>
+    <p class="devnote">On your PO you <b>hold</b> one button and tap another. Here, touch and hold with one finger and tap with another, or <b>long-press</b> a button until it glows: it stays held until you tap it again or finish the combo. Knobs: drag up or down.</p>
+    <div class="vol">
+      <label for="volSlider" class="lab">Volume</label>
+      <input type="range" id="volSlider" min="1" max="16" step="1" value="8">
+      <span id="volVal" class="lab">8</span>
+    </div>
+    <p class="devnote small">No sound on iPhone? Tap any key once, turn up the volume buttons, and if it is still quiet flip the ring/silent switch off. On the real PO-12, volume is <b>bpm + 1-16</b>.</p>
+    <div class="beats" id="beats">
+      <h3 class="lab">My beats</h3>
+      <form class="saverow" id="saveForm">
+        <input id="beatName" type="text" maxlength="40" placeholder="Name this beat" autocomplete="off" aria-label="Beat name">
+        <button class="btn primary" type="submit">Save</button>
+      </form>
+      <ul class="blist" id="beatList"></ul>
+      <div class="export">
+        <h3 class="lab">Export WAV</h3>
+        <div class="exrow">
+          <label for="exLoops" class="lab">Length</label>
+          <select id="exLoops">
+            <option value="1">1 pass</option>
+            <option value="2">2 passes</option>
+            <option value="4" selected>4 passes</option>
+            <option value="8">8 passes</option>
+          </select>
+          <button class="btn primary" type="button" id="btnExport">Export WAV</button>
+          <button class="btn" type="button" id="btnHear" hidden>Play render</button>
+          <a class="btn primary" id="dlLink" hidden>Download WAV</a>
+        </div>
+        <p class="devnote small">To capture a jam with FX punch-ins, tap the <b>REC</b> key on the device, play, then tap it again to stop and save. Up to 3 minutes.</p>
+        <p class="devnote small savestat" id="saveStat" aria-live="polite">Checking whether saving is available here...</p>
+        <div class="actions" id="permRow" hidden><button class="btn" type="button" id="btnPerm">Allow saving files</button></div>
+        <p class="devnote small" id="exMsg" aria-live="polite">Renders the current pattern or chain with your tempo, swing, sound settings, locks and retrigs. Live FX punch-ins are not included. Then tap Download to save the WAV.</p>
+      </div>
+      <details class="codebox">
+        <summary>Beat code: share or move to another phone</summary>
+        <p class="devnote small">A code holds all 16 patterns, the chain, tempo, swing and sound settings. Copy it, text it to someone, and they paste it here.</p>
+        <div class="actions"><button class="btn" id="btnCopyCode" type="button">Copy code for current beat</button></div>
+        <textarea id="codeIn" rows="3" placeholder="Paste a beat code" aria-label="Paste a beat code"></textarea>
+        <div class="actions"><button class="btn" id="btnLoadCode" type="button">Load code</button><span class="lab" id="codeMsg" aria-live="polite"></span></div>
+      </details>
+      <p class="devnote small">Saves live in this browser on this phone. Use a beat code to back one up or share it.</p>
+    </div>
+    <div class="devtools">
+      <button class="btn" id="btnStarter">Load starter beat</button>
+      <button class="btn" id="btnReset">Wipe device</button>
+    </div>
+  </section>
+
+  <section class="book" aria-label="Missions">
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <div id="panel"></div>
+    <details class="ref">
+      <summary>Cheat sheet: every combo</summary>
+      <div class="tblw"><table id="refTable"></table></div>
+    </details>
+  </section>
+</div>
+<footer>Unofficial practice tool. Sounds and effects are synthesized approximations of the PO-12, so use your ears on the real thing. Layout of the function keys is simplified. <span id="build">Standalone build 14</span></footer>
+
+<script>
+(function(){
+"use strict";
+const SOUNDS=["bass drum","snare drum","closed hi-hat","open hi-hat","synth snare","sticks","cymbal","noise","hand clap","click","low tom","hi tom","cow bell","blip","tone","bass tone"];
+const SABBR=["BD","SD","CH","OH","SS","ST","CY","NZ","CP","CK","LT","HT","CB","BL","TN","BS"];
+const FX=["low sample rate","distortion","bit crush","delay","lowpass filter","lowpass sweep","hipass filter","hipass sweep","stutter 4","stutter 3","repeat 8","repeat 6","note shuffle","feedback","parameter lfo","vibrato"];
+const FABBR=["SR","DS","BC","DL","LP","LS","HP","HS","S4","S3","R8","R6","SH","FB","LF","VB"];
+const PRESETS=[[80,"hip hop"],[120,"disco"],[140,"techno"]];
+const pad2=n=>String(n).padStart(2,"0");
+
+/* ---------- state ---------- */
+function emptyPattern(){return {grid:Array.from({length:16},()=>Array(16).fill(false)),locks:Array.from({length:16},()=>Array(16).fill(null)),retrig:Array.from({length:16},()=>Array(16).fill(1))}}
+const st={patterns:Array.from({length:16},emptyPattern),cs:4,cp:0,chain:[0],chainPos:0,chainBuilding:false,playing:false,write:false,bpm:120,preset:1,swing:0,vol:8,fx:-1,sync:0,kA:Array(16).fill(.5),kB:Array(16).fill(.5),step:0,heldStep:null};
+function save(){try{localStorage.setItem("po12bs_dev",JSON.stringify({patterns:st.patterns,cs:st.cs,cp:st.cp,chain:st.chain,bpm:st.bpm,preset:st.preset,swing:st.swing,vol:st.vol,kA:st.kA,kB:st.kB}))}catch(e){}}
+function load(){try{const d=JSON.parse(localStorage.getItem("po12bs_dev")||"null");if(d&&d.patterns&&d.patterns.length===16){Object.assign(st,d)}}catch(e){}}
+const REC_MAX=180;let rec=null;
+let saveT=null;function saveSoon(){clearTimeout(saveT);saveT=setTimeout(save,400)}
+
+/* ---------- audio ---------- */
+let ctx=null,bus,fxIn,lp,shaper,dirG,vibG,vibD,vibLfo,vibDepth,dlySend,dly,dlyFb,master,comp,noiseBuf;
+function curve(kind){
+  const n=2048,c=new Float32Array(n);
+  for(let i=0;i<n;i++){const x=i/(n-1)*2-1;
+    if(kind==="dist")c[i]=Math.tanh(x*7);
+    else if(kind==="crush")c[i]=Math.round(x*4)/4;
+    else if(kind==="sr")c[i]=Math.round(x*12)/12;
+    else c[i]=x;}
+  return c;
+}
+const CURVES={};
+function initAudio(){
+  if(ctx){if(ctx.state!=="running")ctx.resume();return}
+  const AC=window.AudioContext||window.webkitAudioContext; if(!AC)return;
+  ctx=new AC();
+  noiseBuf=ctx.createBuffer(1,ctx.sampleRate,ctx.sampleRate);const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+  ["lin","dist","crush","sr"].forEach(k=>CURVES[k]=curve(k));
+  bus=ctx.createGain();
+  lp=ctx.createBiquadFilter();lp.type="lowpass";lp.frequency.value=20000;lp.Q.value=0.7;
+  shaper=ctx.createWaveShaper();shaper.curve=CURVES.lin;
+  dirG=ctx.createGain();vibG=ctx.createGain();vibG.gain.value=0;
+  vibD=ctx.createDelay(0.05);vibD.delayTime.value=0.006;
+  vibLfo=ctx.createOscillator();vibLfo.frequency.value=6;vibDepth=ctx.createGain();vibDepth.gain.value=0.003;vibLfo.connect(vibDepth).connect(vibD.delayTime);vibLfo.start();
+  dlySend=ctx.createGain();dlySend.gain.value=0;dly=ctx.createDelay(2);dlyFb=ctx.createGain();dlyFb.gain.value=0;
+  master=ctx.createGain();comp=ctx.createDynamicsCompressor();comp.threshold.value=-10;comp.ratio.value=4;
+  bus.connect(lp);lp.connect(shaper);shaper.connect(dirG);shaper.connect(vibD);vibD.connect(vibG);
+  dirG.connect(master);vibG.connect(master);
+  shaper.connect(dlySend);dlySend.connect(dly);dly.connect(dlyFb);dlyFb.connect(dly);dly.connect(master);
+  master.connect(comp).connect(ctx.destination);
+  setVol();applyFx();
+}
+function setVol(){if(master)master.gain.value=Math.pow(st.vol/16,1.3)*1.4;const vs=document.getElementById("volSlider");if(vs){vs.value=st.vol;document.getElementById("volVal").textContent=st.vol}}
+/* iPhone: play through the silent switch and unlock audio on a real tap */
+try{if(navigator.audioSession)navigator.audioSession.type="playback"}catch(e){}
+function silentWav(){const n=4410,b=new Uint8Array(44+n*2),v=new DataView(b.buffer);const w=(o,t)=>{for(let i=0;i<t.length;i++)b[o+i]=t.charCodeAt(i)};
+  w(0,"RIFF");v.setUint32(4,36+n*2,true);w(8,"WAVE");w(12,"fmt ");v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,44100,true);v.setUint32(28,88200,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,"data");v.setUint32(40,n*2,true);
+  let s="";for(let i=0;i<b.length;i++)s+=String.fromCharCode(b[i]);return "data:audio/wav;base64,"+btoa(s)}
+let keepAlive=null,unlocked=false;
+function unlock(){
+  initAudio();if(!ctx)return;
+  if(ctx.state!=="running")ctx.resume();
+  try{const b=ctx.createBuffer(1,1,22050),src=ctx.createBufferSource();src.buffer=b;src.connect(ctx.destination);src.start(0)}catch(e){}
+  if(!keepAlive){try{keepAlive=new Audio(silentWav());keepAlive.loop=true;keepAlive.setAttribute("playsinline","");keepAlive.volume=0.01}catch(e){}}
+  if(keepAlive&&keepAlive.paused){const pr=keepAlive.play();if(pr&&pr.catch)pr.catch(()=>{})}
+  if(ctx.state==="running")unlocked=true;
+}
+["touchend","pointerup","click","keydown"].forEach(t=>document.addEventListener(t,()=>{if(!unlocked||(ctx&&ctx.state!=="running"))unlock()},{capture:true,passive:true}));
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&ctx&&ctx.state!=="running")ctx.resume()});
+function env(g,t,peak,dec){g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(peak,t+0.002);g.gain.exponentialRampToValueAtTime(0.0001,t+Math.max(0.01,dec))}
+function osc(type,f0,f1,t,dec,peak,glide,dest){const o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.setValueAtTime(f0,t);if(f1)o.frequency.exponentialRampToValueAtTime(f1,t+glide);env(g,t,peak,dec);o.connect(g).connect(dest||bus);o.start(t);o.stop(t+dec+0.05);return o}
+function noise(t,dec,peak,ftype,freq,q,dest){const s=ctx.createBufferSource();s.buffer=noiseBuf;const f=ctx.createBiquadFilter();f.type=ftype;f.frequency.value=freq;f.Q.value=q||0.7;const g=ctx.createGain();env(g,t,peak,dec);s.connect(f).connect(g).connect(dest||bus);s.start(t,Math.random()*0.5);s.stop(t+dec+0.05)}
+function voice(s,t,a,b){
+  if(!ctx)return;
+  const p=Math.pow(2,(a-0.5)*2), d=0.4+Math.pow(b,1.4)*2.4;
+  switch(s){
+    case 0: osc("sine",150*p,42*p,t,0.42*d,1,0.11*d);osc("triangle",900*p,0,t,0.012,0.25);break;
+    case 1: osc("triangle",190*p,140*p,t,0.11*d,0.5,0.05);noise(t,0.17*d,0.55,"highpass",1500*p);break;
+    case 2: noise(t,0.045*d,0.4,"highpass",7500*p);break;
+    case 3: noise(t,0.33*d,0.35,"highpass",6800*p);break;
+    case 4: noise(t,0.24*d,0.5,"bandpass",1300*p,1.2);osc("square",330*p,220*p,t,0.05,0.12,0.04);break;
+    case 5: noise(t,0.03*d,0.6,"bandpass",3400*p,6);osc("sine",1500*p,0,t,0.025,0.25);break;
+    case 6: noise(t,0.9*d,0.28,"highpass",5200*p);[320,470,610].forEach(f=>osc("square",f*p*2.1,0,t,0.5*d,0.025));break;
+    case 7: noise(t,0.3*d,0.4,"lowpass",8000*p);break;
+    case 8: [0,0.011,0.022].forEach(o=>noise(t+o,0.012,0.6,"bandpass",1400*p,1.4));noise(t+0.03,0.19*d,0.45,"bandpass",1300*p,1.2);break;
+    case 9: osc("sine",2200*p,0,t,0.012*d,0.5);break;
+    case 10: osc("sine",120*p,78*p,t,0.36*d,0.85,0.2*d);break;
+    case 11: osc("sine",230*p,160*p,t,0.26*d,0.75,0.15*d);break;
+    case 12:{const f=ctx.createBiquadFilter();f.type="bandpass";f.frequency.value=820*p;f.Q.value=2;f.connect(bus);osc("square",545*p,0,t,0.28*d,0.3,0,f);osc("square",815*p,0,t,0.28*d,0.3,0,f);break}
+    case 13: osc("square",1300*p,620*p,t,0.06*d,0.22,0.05);break;
+    case 14: osc("triangle",440*p,0,t,0.38*d,0.45);break;
+    case 15:{const f=ctx.createBiquadFilter();f.type="lowpass";f.frequency.value=420*p;f.Q.value=4;f.connect(bus);osc("sawtooth",55*p,0,t,0.5*d,0.55,0,f);break}
+  }
+}
+function applyFx(){
+  if(!ctx)return;const now=ctx.currentTime;
+  lp.type="lowpass";lp.frequency.cancelScheduledValues(now);lp.frequency.setValueAtTime(20000,now);lp.Q.value=0.7;
+  shaper.curve=CURVES.lin;dlySend.gain.setValueAtTime(0,now);dlyFb.gain.setValueAtTime(0,now);dirG.gain.setValueAtTime(1,now);vibG.gain.setValueAtTime(0,now);
+  const sd=60/st.bpm/4;
+  switch(st.fx){
+    case 0: shaper.curve=CURVES.sr;lp.frequency.setValueAtTime(2600,now);break;
+    case 1: shaper.curve=CURVES.dist;break;
+    case 2: shaper.curve=CURVES.crush;break;
+    case 3: dly.delayTime.setValueAtTime(sd*3,now);dlySend.gain.setValueAtTime(0.5,now);dlyFb.gain.setValueAtTime(0.45,now);break;
+    case 4: lp.frequency.setValueAtTime(650,now);lp.Q.value=6;break;
+    case 5: lp.Q.value=8;break;
+    case 6: lp.type="highpass";lp.frequency.setValueAtTime(2200,now);lp.Q.value=3;break;
+    case 7: lp.type="highpass";lp.Q.value=6;break;
+    case 13: dly.delayTime.setValueAtTime(sd,now);dlySend.gain.setValueAtTime(0.7,now);dlyFb.gain.setValueAtTime(0.82,now);break;
+    case 15: dirG.gain.setValueAtTime(0,now);vibG.gain.setValueAtTime(1,now);break;
+  }
+}
+
+/* ---------- sequencer ---------- */
+let nextTime=0,tick=0,timer=null,fxAnchorTick=0,fxAnchorStep=0;const uiQ=[];
+function stepDur(){return 60/st.bpm/4}
+function start(){initAudio();if(!ctx)return;st.playing=true;st.step=0;tick=0;st.chainPos=Math.max(0,st.chain.indexOf(st.cp));nextTime=ctx.currentTime+0.06;timer=setInterval(schedule,25);ev("play");}
+function stop(){st.playing=false;clearInterval(timer);timer=null;uiQ.length=0;ev("stop")}
+function notesAt(pat,step){const out=[];for(let s=0;s<16;s++)if(pat.grid[s][step])out.push(s);return out}
+function schedule(){
+  const dur=stepDur();
+  while(nextTime<ctx.currentTime+0.12){
+    const step=st.step, pat=st.patterns[st.cp];
+    const sw=(step%2===1)?st.swing*dur*0.5:0, t=nextTime+sw;
+    let src=step;const f=st.fx, rel=tick-fxAnchorTick;
+    if(f===8)src=(fxAnchorStep+(rel%4))%16;
+    else if(f===9)src=(fxAnchorStep+(rel%3))%16;
+    else if(f===10||f===11)src=fxAnchorStep;
+    else if(f===12)src=Math.floor(Math.random()*16);
+    if(f===5||f===7){const ph=(tick%16)/16;const fr=f===5?200+5000*(0.5-0.5*Math.cos(ph*Math.PI*2)):300+6000*(0.5-0.5*Math.cos(ph*Math.PI*2));lp.frequency.setTargetAtTime(fr,t,0.03)}
+    for(const s of notesAt(pat,src)){
+      const lk=pat.locks[s][src];let a=lk?lk.a:st.kA[s];const b=lk?lk.b:st.kB[s];
+      if(f===14)a=Math.min(1,Math.max(0,a+0.3*Math.sin(tick*0.7)));
+      const m=pat.retrig[s][src]||1;
+      for(let r=0;r<m;r++)voice(s,t+r*(dur/m),a,b);
+      if(f===10)voice(s,t+dur/2,a,b);
+      if(f===11)voice(s,t+dur*0.66,a,b);
+    }
+    uiQ.push({step,t});
+    nextTime+=dur;tick++;st.step=(st.step+1)%16;
+    if(st.step===0&&st.chain.length>1&&!st.chainBuilding){st.chainPos=(st.chainPos+1)%st.chain.length;st.cp=st.chain[st.chainPos];}
+  }
+}
+let phStep=-1;
+function raf(){
+  if(ctx&&st.playing){while(uiQ.length&&uiQ[0].t<=ctx.currentTime){phStep=uiQ.shift().step;}}else phStep=-1;
+  renderKeys();requestAnimationFrame(raf);
+}
+
+/* ---------- LCD ---------- */
+const $=id=>document.getElementById(id);
+let msg=null,msgT=null;
+function say(text,ms){msg=text;clearTimeout(msgT);msgT=setTimeout(()=>{msg=null;renderLcd()},ms||1600);renderLcd()}
+for(let i=0;i<16;i++)$("lcdMini").appendChild(document.createElement("i"));
+function renderLcd(){
+  let pat="P"+pad2(st.cp+1);if(st.chain.length>1)pat+=" CH"+st.chain.length;
+  if(typeof rec!=="undefined"&&rec)pat="\u25CF "+recClock();
+  $("lcdPat").textContent=pat;
+  $("lcdBpm").textContent=(st.sync?"SY"+st.sync+" ":"")+st.bpm;
+  $("lcdRec").classList.toggle("on",st.write);
+  let big=msg;
+  if(!big){
+    if(st.fx>=0)big="FX "+pad2(st.fx+1)+" "+FX[st.fx];
+    else if(st.chainBuilding)big="chain "+st.chain.map(c=>c+1).join(" ");
+    else if(st.heldStep!=null)big="step "+(st.heldStep+1)+" held: tap bpm";
+    else big="snd "+pad2(st.cs+1)+" "+SOUNDS[st.cs];
+  }
+  $("lcdBig").textContent=big;
+}
+
+/* ---------- keys ---------- */
+const MODS=["sound","pattern","bpm","funct","fx","write"];
+const mods={};MODS.forEach(m=>mods[m]={down:false,latched:false,used:false,t:0,rel:false});
+const held=m=>mods[m].down||mods[m].latched;
+const keyEls={};
+const grid=$("grid");
+function mkKey(id,html,cls){const b=document.createElement("button");b.className="key "+(cls||"");b.innerHTML=html;b.dataset.k=id;b.type="button";keyEls[id]=b;grid.appendChild(b);return b}
+function mkPad(){const d=document.createElement("div");d.className="pad";d.setAttribute("aria-hidden","true");grid.appendChild(d)}
+mkKey("sound","sound","fn");mkKey("pattern","pattern","fn");mkKey("bpm","bpm","fn");mkPad();mkKey("rec",'<span class="recdot" aria-hidden="true"></span><span class="reclab">rec</span>',"fn util").setAttribute("aria-label","Record live: tap to start, tap again to stop and save");
+const rightCol=["funct","fx","play","write"];
+for(let r=0;r<4;r++){
+  for(let c=0;c<4;c++){const i=r*4+c;mkKey("s"+i,'<span class="led"></span><span class="s">'+SABBR[i]+'</span><span class="num">'+(i+1)+'</span><span class="f">'+FABBR[i]+'</span>',"step").setAttribute("aria-label","Key "+(i+1)+", "+SOUNDS[i]+", effect "+FX[i]);}
+  const id=rightCol[r];mkKey(id,id==="play"?"play":id,"fn");
+}
+function renderKeys(){
+  const pat=st.patterns[st.cp];
+  const mini=$("lcdMini").children;
+  for(let i=0;i<16;i++){
+    const el=keyEls["s"+i];let lit=false;
+    if(held("pattern"))lit=st.chain.includes(i)||i===st.cp;
+    else if(held("sound"))lit=i===st.cs;
+    else if(held("fx"))lit=i===st.fx;
+    else if(held("bpm"))lit=i<st.vol;
+    else if(st.write)lit=pat.grid[st.cs][i];
+    else lit=false;
+    el.classList.toggle("lit",lit);
+    el.classList.toggle("ph",i===phStep);
+    el.classList.toggle("stepheld",st.heldStep===i);
+    let any=false;for(let s=0;s<16;s++)if(pat.grid[s][i]){any=true;break}
+    mini[i].className=(i===phStep?"p":any?"n":"");
+  }
+  MODS.forEach(m=>keyEls[m].classList.toggle("held",held(m)));
+  keyEls.play.classList.toggle("on-state",st.playing);
+  keyEls.write.classList.toggle("on-state",st.write);
+}
+function consume(...names){names.forEach(n=>{mods[n].latched=false;mods[n].used=true})}
+
+/* ---------- events (for missions) ---------- */
+let evLog=[];
+function ev(type,n){evLog.push({type,n});checkMissions({type,n});saveSoon();renderLcd()}
+
+/* ---------- actions ---------- */
+function tapMod(m){
+  if(m==="write"){st.write=!st.write;st.heldStep=null;say(st.write?"write mode on":"write mode off");ev("write")}
+  else if(m==="bpm"){st.preset=(st.preset+1)%3;st.bpm=PRESETS[st.preset][0];say(PRESETS[st.preset][1]+" "+st.bpm);applyFx();ev("bpmTap")}
+  else if(m==="fx"){st.fx=-1;applyFx();say("effects cleared");ev("fxClear")}
+  else if(m==="sound")say("hold sound + 1-16");
+  else if(m==="pattern")say("hold pattern + 1-16");
+  else if(m==="funct")say("funct: try + pattern or + bpm");
+}
+function releaseMod(m){
+  if(m==="pattern"&&st.chainBuilding){st.chainBuilding=false;if(st.chain.length>1){say("chain "+st.chain.map(c=>c+1).join(" "));ev("chain")}}
+  if(m==="fx"&&st.fx>=0){st.fx=-1;applyFx()}
+}
+function pressMod(m){
+  initAudio();
+  if(m==="pattern"&&held("funct")){st.patterns[st.cp]=emptyPattern();say("cleared P"+pad2(st.cp+1));consume("funct","pattern");ev("clear",st.cp);return}
+  if(m==="bpm"&&st.heldStep!=null&&st.write){
+    const s=st.cs,i=st.heldStep,pat=st.patterns[st.cp];const seq=[1,2,4,8,16];
+    pat.grid[s][i]=true;pat.retrig[s][i]=seq[(seq.indexOf(pat.retrig[s][i])+1)%seq.length];
+    say("step "+(i+1)+" retrig x"+pat.retrig[s][i]);mods.bpm.used=true;ev("retrig");return}
+  if(m==="bpm"&&held("funct")){st.sync=(st.sync+1)%6;say("sync mode SY"+st.sync);consume("funct","bpm");ev("sync");return}
+  if(m==="bpm"&&held("sound")){say("battery ok");consume("sound","bpm");ev("battery");return}
+  if(m==="pattern"&&held("write")){mods.write.used=true;say("tap 1-16 to paste");return}
+}
+function pressNum(i){
+  initAudio();
+  const P=held("pattern"),W=held("write"),S=held("sound"),B=held("bpm"),F=held("fx");
+  if(P&&W){const src=st.patterns[st.cp];st.patterns[i]=JSON.parse(JSON.stringify(src));say("copied to P"+pad2(i+1));consume("pattern","write");ev("copy",i);return}
+  if(P){mods.pattern.used=true;
+    if(!st.chainBuilding){st.chainBuilding=true;st.chain=[i];st.cp=i;st.chainPos=0;say("pattern "+(i+1));ev("selPattern",i)}
+    else if(st.chain.length<16){st.chain.push(i);say("chain "+st.chain.map(c=>c+1).join(" "))}
+    return}
+  if(S){st.cs=i;voice(i,ctx?ctx.currentTime+0.01:0,st.kA[i],st.kB[i]);consume("sound");say("snd "+pad2(i+1)+" "+SOUNDS[i]);ev("selSound",i);return}
+  if(B){st.vol=i+1;setVol();consume("bpm");say("volume "+(i+1));ev("volume",i);return}
+  if(F){mods.fx.used=true;st.fx=i;fxAnchorTick=tick;fxAnchorStep=st.playing?(st.step+15)%16:0;applyFx();say("fx "+pad2(i+1)+" "+FX[i]);ev("fx",i);return}
+  if(W){mods.write.used=true;voice(i,ctx?ctx.currentTime+0.005:0,st.kA[i],st.kB[i]);
+    if(st.playing){const dur=stepDur();const ahead=Math.round((ctx.currentTime-(nextTime-dur))/dur);const q=((st.step-1+ahead)%16+16)%16;st.patterns[st.cp].grid[i][q]=true;say("rec "+SABBR[i]+" on "+(q+1));ev("liveRec",i)}
+    else say("press play to live record");
+    return}
+  // plain press outside write mode: play the sound
+  if(!st.write){voice(i,ctx?ctx.currentTime+0.005:0,st.kA[i],st.kB[i]);say(SOUNDS[i],900)}
+}
+function toggleStep(i){const pat=st.patterns[st.cp];pat.grid[st.cs][i]=!pat.grid[st.cs][i];if(!pat.grid[st.cs][i]){pat.locks[st.cs][i]=null;pat.retrig[st.cs][i]=1}
+  if(pat.grid[st.cs][i]&&!st.playing)voice(st.cs,ctx?ctx.currentTime+0.005:0,st.kA[st.cs],st.kB[st.cs]);ev("step",i)}
+
+/* pointer handling */
+const stepPress={};
+grid.addEventListener("pointerdown",e=>{
+  const b=e.target.closest(".key");if(!b)return;e.preventDefault();
+  try{b.setPointerCapture(e.pointerId)}catch(_){}
+  b.classList.add("down");const k=b.dataset.k;initAudio();
+  if(k==="rec"){rec?stopRec():startRec();return}
+  if(k==="play"){st.playing?stop():start();return}
+  if(MODS.includes(k)){const m=mods[k];
+    if(m.latched){m.latched=false;m.rel=true;releaseMod(k);renderLcd();return}
+    m.down=true;m.used=false;m.t=performance.now();pressMod(k);renderLcd();return}
+  const i=+k.slice(1);
+  const anyMod=MODS.some(held);
+  if(st.write&&!anyMod){
+    if(st.heldStep===i){st.heldStep=null;stepPress[i]={skip:true};renderLcd();return}
+    stepPress[i]={t:performance.now(),skip:false};
+    stepPress[i].timer=setTimeout(()=>{st.heldStep=i;stepPress[i].skip=true;renderLcd()},380);
+    return}
+  pressNum(i);
+});
+function up(e){
+  const b=e.target.closest&&e.target.closest(".key");if(!b)return;b.classList.remove("down");const k=b.dataset.k;
+  if(MODS.includes(k)){const m=mods[k];
+    if(m.rel){m.rel=false;return}
+    if(!m.down)return;m.down=false;
+    if(m.used){releaseMod(k)}
+    else if(performance.now()-m.t<300){tapMod(k)}
+    else{m.latched=true}
+    renderLcd();return}
+  if(k&&k[0]==="s"){const i=+k.slice(1),sp=stepPress[i];if(!sp)return;clearTimeout(sp.timer);if(!sp.skip)toggleStep(i);delete stepPress[i]}
+}
+grid.addEventListener("pointerup",up);grid.addEventListener("pointercancel",up);
+grid.addEventListener("contextmenu",e=>e.preventDefault());
+grid.addEventListener("keydown",e=>{ // keyboard: Enter/Space acts like a quick tap
+  const b=e.target.closest(".key");if(!b||(e.key!=="Enter"&&e.key!==" "))return;e.preventDefault();
+  const k=b.dataset.k;initAudio();
+  if(k==="rec"){rec?stopRec():startRec()}
+  else if(k==="play"){st.playing?stop():start()}
+  else if(MODS.includes(k)){const m=mods[k];if(m.latched){m.latched=false;releaseMod(k)}else if(e.shiftKey){m.latched=true;m.used=false;pressMod(k)}else tapMod(k)}
+  else{const i=+k.slice(1);if(st.write&&!MODS.some(held))toggleStep(i);else pressNum(i)}
+  renderLcd();
+});
+
+/* knobs */
+function knobVal(which){return which==="A"?st.kA[st.cs]:st.kB[st.cs]}
+function renderKnobs(){
+  let a=st.kA[st.cs],b=st.kB[st.cs];
+  if(held("bpm")){a=st.swing;b=(st.bpm-60)/180}
+  $("knobA").style.setProperty("--r",(a*270-135)+"deg");$("knobB").style.setProperty("--r",(b*270-135)+"deg");
+  $("knobA").setAttribute("aria-valuenow",Math.round(a*100));$("knobB").setAttribute("aria-valuenow",Math.round(b*100));
+}
+let lastPrev=0;
+function turn(which,delta){
+  initAudio();
+  if(held("bpm")){mods.bpm.used=true;
+    if(which==="A"){st.swing=Math.min(1,Math.max(0,st.swing+delta));say("swing "+Math.round(st.swing*100)+"%");ev("swing")}
+    else{st.bpm=Math.round(Math.min(240,Math.max(60,st.bpm+delta*180)));applyFx();say("tempo "+st.bpm);ev("tempoFine")}
+    renderKnobs();return}
+  const arr=which==="A"?st.kA:st.kB;arr[st.cs]=Math.min(1,Math.max(0,arr[st.cs]+delta));
+  if(held("write")&&st.playing){mods.write.used=true;const q=((st.step-1)%16+16)%16;const pat=st.patterns[st.cp];
+    pat.locks[st.cs][q]={a:st.kA[st.cs],b:st.kB[st.cs]};say("lock "+SABBR[st.cs]+" step "+(q+1));ev("pLock")}
+  else{say(SABBR[st.cs]+" "+which+" "+Math.round(arr[st.cs]*100),900);ev("knobSound")}
+  if(!st.playing&&ctx&&performance.now()-lastPrev>140){lastPrev=performance.now();voice(st.cs,ctx.currentTime+0.005,st.kA[st.cs],st.kB[st.cs])}
+  renderKnobs();
+}
+["A","B"].forEach(w=>{
+  const el=$("knob"+w);let y0=0,x0=0,drag=false;
+  el.addEventListener("pointerdown",e=>{drag=true;y0=e.clientY;x0=e.clientX;try{el.setPointerCapture(e.pointerId)}catch(_){}e.preventDefault()});
+  el.addEventListener("pointermove",e=>{if(!drag)return;const d=((y0-e.clientY)+(e.clientX-x0))/160;y0=e.clientY;x0=e.clientX;if(d)turn(w,d)});
+  const end=()=>{drag=false};el.addEventListener("pointerup",end);el.addEventListener("pointercancel",end);
+  el.addEventListener("wheel",e=>{e.preventDefault();turn(w,-e.deltaY/1200)},{passive:false});
+  el.addEventListener("keydown",e=>{if(e.key==="ArrowUp"||e.key==="ArrowRight"){e.preventDefault();turn(w,.05)}if(e.key==="ArrowDown"||e.key==="ArrowLeft"){e.preventDefault();turn(w,-.05)}});
+});
+
+/* ---------- missions ---------- */
+const K=t=>"<kbd>"+t+"</kbd>";
+const g=(p,s,i)=>st.patterns[p].grid[s][i];
+const rowIs=(p,s,steps)=>{for(let i=0;i<16;i++)if(g(p,s,i)!==steps.includes(i))return false;return true};
+const has=(type,n)=>evLog.some(e=>e.type===type&&(n===undefined||e.n===n));
+const TRACKS=[
+ {name:"Steps",sub:"Make a beat",missions:[
+  {t:"Wake it up",d:"Press "+K("play")+" to start the sequencer. The light running across the keys is the playhead walking through 16 steps.",w:"One pattern is 16 steps, which is one bar of 16th notes. Every beat you make lives on this grid.",h:"Play is on the right side, third row down.",c:()=>st.playing},
+  {t:"Pick the kick",d:"Hold "+K("sound")+" and tap "+K("1")+" to choose the bass drum.",w:"Each of the 16 keys is a sound. SOUND + a key chooses which sound you are about to program.",h:"Long-press SOUND until it glows, then tap key 1. Or hold it with one finger and tap with another.",c:()=>st.cs===0&&has("selSound",0)},
+  {t:"Enter write mode",d:"Tap "+K("write")+". REC lights up on the screen.",w:"In write mode the 16 keys stop playing sounds and become steps. Lit keys are steps where the selected sound will play.",h:"A quick tap toggles write mode. A long press is used for other tricks later.",c:()=>st.write},
+  {t:"Four on the floor",d:"With the bass drum selected, put kicks on steps "+K("1")+K("5")+K("9")+K("13")+" and nowhere else.",w:"One kick per beat. Steps 1, 5, 9 and 13 are the four quarter notes of the bar.",h:"In write mode, tap a key to add a step and tap it again to remove it.",c:()=>rowIs(st.cp,0,[0,4,8,12])},
+  {t:"Backbeat",d:"Select the snare ("+K("sound")+" + "+K("2")+") and place it on steps "+K("5")+" and "+K("13")+".",w:"Snare on beats 2 and 4 is the backbeat. Notice the lit keys change when you switch sounds: each sound has its own row of 16 steps.",h:"You can stay in write mode while you change sounds.",c:()=>rowIs(st.cp,1,[4,12])},
+  {t:"Offbeat hats",d:"Select the closed hi-hat ("+K("sound")+" + "+K("3")+") and add it on "+K("3")+K("7")+K("11")+K("15")+".",w:"Hats between the kicks give that bouncing disco and house feel. Try more hats after this and listen.",h:"Steps 3, 7, 11 and 15 sit halfway between each kick.",c:()=>[2,6,10,14].every(i=>g(st.cp,2,i))},
+  {t:"Pick a tempo",d:"Tap "+K("bpm")+" until the screen reads 120 (disco). Then try 80 and 140 and come back.",w:"BPM cycles three presets: hip hop 80, disco 120, techno 140. For any other tempo, hold BPM and turn knob B.",h:"Quick taps on BPM cycle the presets.",c:()=>st.bpm===120&&has("bpmTap")},
+  {t:"Shape a sound",d:"Turn knob "+K("A")+" or "+K("B")+" to change the selected sound.",w:"Knobs A and B change two parameters of the selected sound, such as pitch and length. Each of the 16 sounds remembers its own settings.",h:"Drag a knob up or down. Select the kick first to hear it clearly.",c:()=>has("knobSound")}
+ ]},
+ {name:"Song",sub:"Patterns + chains",missions:[
+  {t:"Copy your beat",d:"Hold "+K("write")+" and "+K("pattern")+" together, then tap "+K("2")+" to copy this pattern into slot 2.",w:"Copying is the fastest way to make a variation: duplicate the groove, then change a few steps.",h:"Long-press WRITE, long-press PATTERN, then tap 2. If pattern 1 is empty, use Load starter beat below the device.",c:()=>has("copy",1)&&st.patterns[1].grid.some(r=>r.some(Boolean))},
+  {t:"Switch patterns",d:"Hold "+K("pattern")+" and tap "+K("2")+".",w:"There are 16 pattern slots. The one you select is the one you play and edit.",h:"Release PATTERN after tapping 2 (tap it again if it is locked on).",c:()=>st.cp===1&&!st.chainBuilding},
+  {t:"Make a fill",d:"In pattern 2, add a hand clap (sound "+K("9")+") on step "+K("16")+". Add more if you like.",w:"A small change at the end of a bar is a fill. It tells the listener something is about to repeat or change.",h:"SOUND + 9 picks the clap. Then WRITE mode and tap 16.",c:()=>g(1,8,15)},
+  {t:"Chain a song",d:"Hold "+K("pattern")+" and tap "+K("1")+K("1")+K("1")+K("2")+", then let go.",w:"A chain plays patterns in order: three bars of the main beat, then the fill, then it loops. Up to 16 patterns per chain, repeats allowed.",h:"Keep PATTERN held (or locked) for all four taps. The screen shows CH4 when the chain is set.",c:()=>JSON.stringify(st.chain)==="[0,0,0,1]"&&!st.chainBuilding},
+  {t:"Clean slate",d:"Go to pattern 3 ("+K("pattern")+" + "+K("3")+"), then press "+K("funct")+" + "+K("pattern")+" to clear it.",w:"FUNCT + PATTERN wipes the active pattern. Always check which pattern is active first.",h:"Selecting pattern 3 will replace your chain. You can rebuild it after.",c:()=>has("clear",2)}
+ ]},
+ {name:"Live",sub:"FX + punch-ins",missions:[
+  {t:"Add swing",d:"Hold "+K("bpm")+" and turn knob "+K("A")+".",w:"Swing delays every second 16th step. A little makes a straight beat feel human.",h:"Lock BPM with a long press, drag knob A, then tap BPM to release.",c:()=>st.swing>0.05},
+  {t:"Punch in delay",d:"While playing, hold "+K("fx")+" and tap "+K("4")+". Let go to stop the effect.",w:"Effects are punch-ins: they run while FX is held. The orange labels at the bottom of each key are the 16 effects.",h:"Press play first. On the real unit you keep FX held down.",c:()=>st.fx===3&&st.playing},
+  {t:"Stutter",d:"While playing, hold "+K("fx")+" and tap "+K("9")+" for stutter.",w:"Stutter loops a short slice of the pattern. It is the classic build-up move before a drop.",h:"Try tapping different keys while FX stays held to jump between effects.",c:()=>st.fx===8&&st.playing},
+  {t:"Clear effects",d:"Tap "+K("fx")+" on its own.",w:"FX without a number clears effects. Handy when things get messy mid-jam.",h:"A quick tap, no long press.",c:()=>has("fxClear")},
+  {t:"Live record",d:"While playing, hold "+K("write")+" and tap "+K("9")+" in time to record claps.",w:"Live recording is quantized to the nearest step and follows your swing setting.",h:"Long-press WRITE so it stays held, tap 9 with the beat, then tap WRITE to release.",c:()=>has("liveRec")},
+  {t:"Parameter lock",d:"While playing, hold "+K("write")+" and turn knob "+K("A")+" or "+K("B")+".",w:"Holding WRITE records knob moves onto the steps for the selected sound, so a hi-hat can open up only on certain steps.",h:"Select a sound that has notes in the pattern first, so you can hear the change.",c:()=>has("pLock")},
+  {t:"Retrigger",d:"In write mode, hold a lit step key, then tap "+K("bpm")+" to add a roll.",w:"Tapping BPM again cycles 2, 4, 8 and 16 hits on that step. Great for snare rolls and hat rattles.",h:"Long-press the step until it gets a gold ring, then tap BPM.",c:()=>has("retrig")},
+  {t:"Master volume",d:"Hold "+K("bpm")+" and tap a key from "+K("1")+" to "+K("16")+".",w:"Keys set the volume. On the real unit, stay at 5 or below with headphones.",h:"Higher key, louder output.",c:()=>has("volume")}
+ ]},
+ {name:"Bass",sub:"Shape the low end",missions:[
+  {t:"Meet the bass",d:"Hold "+K("sound")+" and tap "+K("16")+" to select the bass tone. Tap it a few times to hear it.",w:"Sound 16 is the PO-12's bass voice and sound 15 is a higher tone. Phone speakers barely play low notes, so use headphones or the real unit's speaker for this track.",h:"Outside write mode, tapping key 16 plays the bass so you can hear it.",c:()=>st.cs===15&&has("selSound",15)},
+  {t:"Tight and low",d:"With the bass selected, turn knob "+K("A")+" down to under 35 and knob "+K("B")+" down to under 40.",w:"Here A sets pitch and B sets how long the note rings. Short, low notes leave room for the kick. On the real PO-12, turn each knob and listen, because each sound responds in its own way.",h:"The screen shows the knob value as you turn, like BS A 30.",c:()=>st.kA[15]<0.35&&st.kB[15]<0.4},
+  {t:"Dodge the kick",d:"In write mode, put the bass on steps "+K("3")+K("7")+K("11")+K("15")+" and keep it off "+K("1")+K("5")+K("9")+K("13")+".",w:"Kick and bass fight over the same low frequencies. Putting the bass between the kicks makes both hit harder. This offbeat bass is the backbone of house and disco.",h:"Load starter beat first if you want kicks to play against.",c:()=>[2,6,10,14].every(i=>g(st.cp,15,i))&&[0,4,8,12].every(i=>!g(st.cp,15,i))},
+  {t:"Write a bassline",d:"Press "+K("play")+". Then hold "+K("write")+" with the bass selected and turn knob "+K("A")+" as the bass notes go by, so different steps get different pitches.",w:"Recording knob moves while WRITE is held is called parameter locking. Locking pitch on each bass step is how you turn one bass sound into a melody.",h:"Turn slowly, a little at a time, so each bass step catches a different value. You need locks on at least two steps.",c:()=>{const L=st.patterns[st.cp].locks[15];const v=new Set();L.forEach((l,i)=>{if(l&&g(st.cp,15,i))v.add(Math.round(l.a*20))});return v.size>=2}},
+  {t:"Long boom",d:"Turn knob "+K("B")+" up past 70 so the bass rings out, and listen to how the groove changes.",w:"Long bass notes fill the space between hits and feel heavier and slower. Short notes feel bouncy. Switch between the two to hear the difference.",h:"Keep the bass selected while you turn B.",c:()=>st.kB[15]>0.7},
+  {t:"Layer a tone",d:"Select the tone ("+K("sound")+" + "+K("15")+") and place it on a step where the bass already plays. Turn its knob "+K("A")+" up.",w:"Stacking a higher tone on top of the bass makes the bassline audible on small speakers and adds character. The bass gives weight and the tone gives the note.",h:"In write mode, switch to sound 16 to see which keys light up, then switch to 15 and add one of those steps.",c:()=>{for(let i=0;i<16;i++)if(g(st.cp,14,i)&&g(st.cp,15,i))return true;return false}},
+  {t:"Filter it live",d:"While playing, hold "+K("fx")+" and tap "+K("5")+" for the lowpass filter. Then try "+K("6")+" for a sweep.",w:"Lowpass cuts the highs and leaves the low end. Punch it in for a muffled, underwater section, then let go to bring the full mix back.",h:"Press play first and keep FX held for the whole effect.",c:()=>(st.fx===4||st.fx===5)&&st.playing}
+ ]},
+ {name:"Styles",sub:"Genre recipes",missions:[
+  {t:"Trap",tempo:"140, half-time feel",d:"Set the tempo to 140 (tap "+K("bpm")+" to techno). Build the grid below, then give a few hi-hat steps a roll: in write mode, hold a hat step and tap "+K("bpm")+".",
+   w:"Trap sits at fast tempos but feels half as fast because the clap only lands once per bar, on step 9. Busy 16th-note hats with rolls, plus a long bass under the kick, do the rest.",
+   h:"Steps are counted 1 to 16. For the bass, turn knob B up so it booms. Hat rolls go on hat steps, so select sound 3 before holding a step.",
+   rec:[[0,[1,8,11]],[8,[9]],[2,[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]],[15,[1,8]]],
+   ex:p=>{p.retrig[2][11]=2;p.retrig[2][14]=4;p.retrig[2][15]=2},exBpm:140,exSw:0,exK:{15:[.4,.85]},
+   c:()=>inBpm(130,150)&&on(0,[1])&&(on(8,[9])||on(1,[9]))&&!on(1,[5])&&!on(1,[13])&&count(2)>=12&&st.patterns[st.cp].retrig[2].some(x=>x>1)},
+  {t:"Drill",tempo:"140 to 145",d:"Keep the tempo around 140. Build the grid below: sparse kicks, snare on 9 with a late one on 16, and skippy hats in a 3-3-2 rhythm. Then lock a different pitch on each bass note.",
+   w:"Drill hats skip in groups of three instead of running straight, which gives the bounce. The 808 bass changes pitch from note to note, so it works as a melody. On the PO-12 you get those pitch moves with parameter locks.",
+   h:"The hats are 1, 4, 7, 9, 12, 15. For bass pitches, press play, hold WRITE with sound 16 selected, and turn knob A as each bass note passes.",
+   rec:[[0,[1,11]],[1,[9,16]],[2,[1,4,7,9,12,15]],[15,[1,4,11]]],
+   ex:p=>{p.locks[15][0]={a:.35,b:.8};p.locks[15][3]={a:.5,b:.6};p.locks[15][10]={a:.25,b:.9}},exBpm:142,exSw:0,
+   c:()=>inBpm(135,150)&&on(1,[9])&&on(2,[1,4,7,9,12,15])&&count(15)>=2&&lockedPitches(15)>=2},
+  {t:"Metro Area style house",tempo:"about 118, a touch of swing",d:"Set the tempo near 118 (hold "+K("bpm")+" and turn knob "+K("B")+") and add a little swing with "+K("bpm")+" + knob "+K("A")+". Then build the grid below.",
+   w:"This is the disco-rooted house sound of New York duo Metro Area: a steady kick, but the groove comes from hand-played-feeling percussion like cowbell, toms and claps around it, with a bouncing offbeat bass. Keep it warm and roomy rather than hard.",
+   h:"Swing only needs to be a little, around 10 to 25 percent. Start with the kick and clap, then add one percussion sound at a time and listen.",
+   rec:[[0,[1,5,9,13]],[8,[5,13]],[3,[3,7,11,15]],[12,[4,7,12,14]],[11,[8]],[10,[16]],[15,[3,7,11,15]]],
+   exBpm:118,exSw:.18,exK:{15:[.45,.35],12:[.55,.4]},
+   c:()=>inBpm(110,126)&&on(0,[1,5,9,13])&&(on(8,[5,13])||on(1,[5,13]))&&count(3)>=3&&count(12)>=2&&st.swing>0.05},
+  {t:"Old school hip hop",tempo:"about 90, heavy swing",d:"Set the tempo near 90 (tap "+K("bpm")+" for 80, then hold "+K("bpm")+" and nudge knob "+K("B")+"). Add plenty of swing with "+K("bpm")+" + knob "+K("A")+", then build the grid below.",
+   w:"Boom bap: the kick is the boom, the snare on 5 and 13 is the bap. Kicks avoid the four-on-the-floor grid, landing on 1 and pushing in late on 8 and 11. Swung 8th-note hats make it nod instead of march.",
+   h:"Swing around 30 to 50 percent. If it sounds stiff, push swing up. If it sounds drunk, pull it back.",
+   rec:[[0,[1,8,11]],[1,[5,13]],[2,[1,3,5,7,9,11,13,15]],[3,[15]]],
+   exBpm:90,exSw:.4,
+   c:()=>inBpm(78,98)&&on(1,[5,13])&&on(0,[1])&&!on(0,[5,9,13])&&count(2)>=6&&st.swing>=0.25},
+  {t:"Ambient",tempo:"60 to 75, lots of space",d:"Slow it right down: hold "+K("bpm")+" and turn knob "+K("B")+" down to 60 to 75. Build the sparse grid below with long notes, then punch in delay with "+K("fx")+" + "+K("4")+" while it plays.",
+   w:"Ambient is about space and sustain, not rhythm. Few hits, long tails, no hard kick. Make the tone ring with knob B and lock different pitches on its notes so it drifts like a slow melody.",
+   h:"Select sound 15 and turn knob B up before placing notes. Leave most steps empty. Silence is part of the pattern.",
+   rec:[[14,[1,7,12]],[13,[10]],[6,[1]],[3,[15]]],
+   ex:p=>{p.locks[14][0]={a:.45,b:.95};p.locks[14][6]={a:.6,b:.95};p.locks[14][11]={a:.38,b:.95}},exBpm:66,exSw:0,exK:{14:[.5,.95],13:[.5,.8],6:[.5,1]},
+   c:()=>st.bpm<=80&&count(14)>=3&&count(0)<=1&&totalHits()<=14&&st.kB[14]>0.6}
+ ]}
+];
+let prog={};try{prog=JSON.parse(localStorage.getItem("po12bs_prog")||"{}")||{}}catch(e){}
+function saveProg(){try{localStorage.setItem("po12bs_prog",JSON.stringify(prog))}catch(e){}}
+let tab=0,mi=0,won=false;
+function key(t,m){return t+"-"+m}
+function firstOpen(t){const ms=TRACKS[t].missions;for(let i=0;i<ms.length;i++)if(!prog[key(t,i)])return i;return 0}
+
+const tabsEl=$("tabs"),panel=$("panel");
+const TABNAMES=[...TRACKS.map(t=>[t.name,t.sub]),["Drill","Combo speed run"]];
+TABNAMES.forEach(([n,s],i)=>{const b=document.createElement("button");b.className="tab";b.setAttribute("role","tab");b.innerHTML="<b>"+(i+1)+" "+n+"</b>"+s;b.onclick=()=>{tab=i;if(i<TRACKS.length)openMission(firstOpen(i));else renderDrill()};tabsEl.appendChild(b)});
+function setTabs(){[...tabsEl.children].forEach((b,i)=>b.setAttribute("aria-selected",String(i===tab)))}
+
+function openMission(i){mi=i;won=false;evLog=[];stopDrill();renderMission();checkMissions(null)}
+function renderMission(){
+  setTabs();const tr=TRACKS[tab],m=tr.missions[mi];
+  const done=!!prog[key(tab,mi)];
+  panel.innerHTML='<div class="card'+(won?" win":"")+'" id="mcard"><div class="meta"><span class="eyebrow">Mission '+(mi+1)+" of "+tr.missions.length+'</span><span class="pill'+(won||done?" ok":"")+'">'+(won?"Nailed it":done?"Done before":"Your move")+'</span></div>'+
+  "<h2>"+m.t+"</h2>"+(m.tempo?'<p class="tempo">Tempo: '+m.tempo+"</p>":"")+"<p>"+m.d+"</p>"+(m.rec?recipeHtml(m):"")+'<p class="why">'+m.w+'</p><div id="hint" hidden><p class="hint">'+m.h+'</p></div>'+
+  '<div class="actions"><button class="btn" id="bHint">Show hint</button>'+(m.rec?'<button class="btn" id="bEx">Hear example</button>':"")+(mi<tr.missions.length-1?'<button class="btn'+(won?" primary":"")+'" id="bNext">'+(won?"Next mission":"Skip")+'</button>':(won?'<button class="btn primary" id="bNextTrack">'+(tab<TRACKS.length-1?"Next track":"Try the drill")+"</button>":""))+'</div>'+
+  '<div class="dots" aria-label="Missions in this track">'+tr.missions.map((x,j)=>'<button class="dot'+(prog[key(tab,j)]?" done":"")+(j===mi?" cur":"")+'" data-j="'+j+'" aria-label="Mission '+(j+1)+": "+x.t+'">'+(j+1)+"</button>").join("")+"</div></div>";
+  $("bHint").onclick=()=>{$("hint").hidden=!$("hint").hidden};
+  const bx=$("bEx");if(bx)bx.onclick=()=>{initAudio();loadExample(m);start()};
+  const nb=$("bNext");if(nb)nb.onclick=()=>openMission(mi+1);
+  const nt=$("bNextTrack");if(nt)nt.onclick=()=>{tab++;if(tab<TRACKS.length)openMission(firstOpen(tab));else renderDrill()};
+  panel.querySelectorAll(".dot").forEach(d=>d.onclick=()=>openMission(+d.dataset.j));
+}
+/* style helpers: steps are written 1-16 */
+function on(s,steps){return steps.every(n=>g(st.cp,s,n-1))}
+function count(s){return st.patterns[st.cp].grid[s].filter(Boolean).length}
+function totalHits(){return st.patterns[st.cp].grid.reduce((a,r)=>a+r.filter(Boolean).length,0)}
+function inBpm(a,b){return st.bpm>=a&&st.bpm<=b}
+function lockedPitches(s){const pt=st.patterns[st.cp],v=new Set();pt.locks[s].forEach((l,i)=>{if(l&&pt.grid[s][i])v.add(Math.round(l.a*20))});return v.size}
+function recipeHtml(m){
+  let h='<div class="recipe" role="table" aria-label="Pattern to build"><div class="rh" role="row"><span></span>'+Array.from({length:16},(_,i)=>'<span class="'+(i%4===0?"beat":"")+'">'+(i+1)+"</span>").join("")+"</div>";
+  m.rec.forEach(([s,steps])=>{h+='<div class="rr" role="row"><span class="rl" title="'+SOUNDS[s]+'">'+(s+1)+" "+SABBR[s]+"</span>"+Array.from({length:16},(_,i)=>'<i class="'+(steps.includes(i+1)?"on":"")+(i%4===0?" beat":"")+'"></i>').join("")+"</div>"});
+  return h+'</div><p class="legend">Rows are sounds (key number and name). Columns are steps 1 to 16. Filled cells get a note. Hear example plays it from pattern 16 and keeps your other patterns. To build your own, go back to pattern 1 (hold PATTERN, tap 1). Builds in pattern 16 do not count.</p>';
+}
+function loadExample(m){
+  const p=emptyPattern();m.rec.forEach(([s,steps])=>steps.forEach(n=>p.grid[s][n-1]=true));if(m.ex)m.ex(p);
+  if(st.playing)stop();st.patterns[15]=p;st.cp=15;st.chain=[15];st.chainPos=0;st.bpm=m.exBpm;st.swing=m.exSw||0;
+  if(m.exK)Object.keys(m.exK).forEach(k=>{st.kA[+k]=m.exK[k][0];st.kB[+k]=m.exK[k][1]});
+  applyFx();renderKnobs();saveSoon();say("example in P16. press play");
+}
+function checkMissions(e){
+  if(tab===TRACKS.length){drillCheck(e);return}
+  if(won)return;const m=TRACKS[tab].missions[mi];
+  if(m.rec&&st.cp===15)return;
+  if(m.c()){won=true;prog[key(tab,mi)]=1;saveProg();renderMission();const c=$("mcard");if(c){c.classList.add("flash")}}
+}
+
+/* ---------- drill ---------- */
+const QS=[
+ ()=>{const n=r16();return{q:"Select sound "+(n+1)+" ("+SOUNDS[n]+")",ok:e=>e&&e.type==="selSound"&&e.n===n}},
+ ()=>{const n=r16();return{q:"Select pattern "+(n+1),ok:e=>e&&e.type==="selPattern"&&e.n===n}},
+ ()=>{let n=r16();if(n===st.cp)n=(n+1)%16;return{q:"Copy this pattern into slot "+(n+1),ok:e=>e&&e.type==="copy"&&e.n===n}},
+ ()=>({q:"Clear the active pattern",ok:e=>e&&e.type==="clear"}),
+ ()=>{const n=r16();return{q:"Set master volume to "+(n+1),ok:e=>e&&e.type==="volume"&&e.n===n}},
+ ()=>{const opts=PRESETS.filter(p=>p[0]!==st.bpm);const p=opts[Math.floor(Math.random()*opts.length)];return{q:"Set tempo to "+p[1]+" ("+p[0]+")",ok:()=>st.bpm===p[0]}},
+ ()=>{const n=r16();return{q:"Punch in effect "+(n+1)+" ("+FX[n]+")",ok:e=>e&&e.type==="fx"&&e.n===n}},
+ ()=>{const a=r16(),b=r16();return{q:"Chain pattern "+(a+1)+" then "+(b+1),ok:()=>!st.chainBuilding&&st.chain.length===2&&st.chain[0]===a&&st.chain[1]===b}},
+ ()=>({q:"Show the battery status",ok:e=>e&&e.type==="battery"}),
+ ()=>({q:"Change the sync mode",ok:e=>e&&e.type==="sync"}),
+ ()=>({q:"Toggle write mode",ok:e=>e&&e.type==="write"}),
+ ()=>({q:"Clear all effects",ok:e=>e&&e.type==="fxClear"})
+];
+function r16(){return Math.floor(Math.random()*16)}
+let drill={on:false,score:0,end:0,cur:null,iv:null,last:-1};
+let best=0;try{best=+localStorage.getItem("po12bs_best")||0}catch(e){}
+function newQ(){let k;do{k=Math.floor(Math.random()*QS.length)}while(k===drill.last);drill.last=k;drill.cur=QS[k]()}
+function renderDrill(){
+  tab=TRACKS.length;setTabs();
+  const left=drill.on?Math.max(0,Math.ceil((drill.end-performance.now())/1000)):60;
+  panel.innerHTML='<div class="card drill" id="dcard"><div class="meta"><span class="eyebrow">Combo speed run</span><span class="pill">60 seconds</span></div>'+
+  (drill.on?'<p class="eyebrow">Do this on the device</p><div class="q" id="dq">'+drill.cur.q+"</div>":"<h2>How fast are your fingers?</h2><p>You get a random task. Do the combo on the device, and the next one appears. Combos come from all three tracks, so check the cheat sheet below if you get stuck.</p>")+
+  '<div class="stats"><div><b id="dScore">'+drill.score+'</b>score</div><div><b id="dTime">'+left+'</b>seconds</div><div><b>'+best+'</b>best</div></div>'+
+  '<div class="actions">'+(drill.on?'<button class="btn" id="dSkip">Skip task</button><button class="btn" id="dStop">Stop</button>':'<button class="btn primary" id="dGo">Start run</button>')+"</div></div>";
+  const go=$("dGo");if(go)go.onclick=startDrill;
+  const sk=$("dSkip");if(sk)sk.onclick=()=>{newQ();renderDrill()};
+  const sp=$("dStop");if(sp)sp.onclick=()=>{stopDrill();renderDrill()};
+}
+function startDrill(){initAudio();drill.on=true;drill.score=0;drill.end=performance.now()+60000;newQ();clearInterval(drill.iv);
+  drill.iv=setInterval(()=>{const left=Math.ceil((drill.end-performance.now())/1000);const t=$("dTime");if(t)t.textContent=Math.max(0,left);if(left<=0){finishDrill()}},250);renderDrill()}
+function finishDrill(){stopDrill();if(drill.score>best){best=drill.score;try{localStorage.setItem("po12bs_best",String(best))}catch(e){}}renderDrill();say("time! score "+drill.score,2500)}
+function stopDrill(){drill.on=false;clearInterval(drill.iv)}
+function drillCheck(e){if(!drill.on||!drill.cur)return;if(drill.cur.ok(e)){drill.score++;newQ();renderDrill();const c=$("dcard");if(c)c.classList.add("flash")}}
+
+/* ---------- cheat sheet ---------- */
+const REF=[["play","start / stop"],["sound + 1-16","select sound"],["pattern + 1-16","select pattern"],["pattern + several keys","chain patterns (up to 16)"],["write","toggle write mode, then tap steps"],["write + pattern + 1-16","copy active pattern to that slot"],["funct + pattern","clear active pattern"],["bpm","cycle 80 / 120 / 140"],["bpm + knob A","swing"],["bpm + knob B","fine tempo 60 to 240"],["bpm + 1-16","master volume"],["fx + 1-16","punch-in effect while held"],["fx","clear effects"],["write + 1-16 (playing)","live record, quantized"],["write + knob (playing)","record parameter locks"],["hold step + bpm","retrigger x2 / x4 / x8 / x16"],["knob A / B","shape the selected sound"],["sound + bpm","battery status"],["funct + bpm","cycle sync modes SY0 to SY5"]];
+$("refTable").innerHTML=REF.map(r=>"<tr><td>"+r[0].split(" + ").map(K).join(" + ")+"</td><td>"+r[1]+"</td></tr>").join("");
+
+/* ---------- device tools ---------- */
+let wipeArm=false;
+$("btnStarter").onclick=()=>{const p=emptyPattern();[0,4,8,12].forEach(i=>p.grid[0][i]=true);[4,12].forEach(i=>p.grid[1][i]=true);[2,6,10,14].forEach(i=>p.grid[2][i]=true);[3,11].forEach(i=>p.grid[15][i]=true);p.grid[15][6]=true;st.patterns[0]=p;st.cp=0;st.chain=[0];say("starter beat in P01");ev("starter")};
+$("btnReset").onclick=e=>{if(!wipeArm){wipeArm=true;e.target.textContent="Tap again to wipe";setTimeout(()=>{wipeArm=false;e.target.textContent="Wipe device"},2500);return}
+  wipeArm=false;e.target.textContent="Wipe device";if(st.playing)stop();st.patterns=Array.from({length:16},emptyPattern);st.chain=[0];st.cp=0;st.fx=-1;st.swing=0;st.kA.fill(.5);st.kB.fill(.5);st.write=false;say("device wiped");ev("wipe")};
+
+document.getElementById("volSlider").addEventListener("input",e=>{st.vol=+e.target.value;initAudio();setVol();saveSoon();say("volume "+st.vol,900)});
+/* ---------- my beats ---------- */
+function snapshot(){return JSON.parse(JSON.stringify({patterns:st.patterns,chain:st.chain,cp:st.cp,bpm:st.bpm,preset:st.preset,swing:st.swing,kA:st.kA,kB:st.kB}))}
+function applySnap(d){
+  if(!d||!Array.isArray(d.patterns)||d.patterns.length!==16)throw new Error("bad");
+  if(st.playing)stop();
+  st.patterns=d.patterns.map(p=>{const e=emptyPattern();if(p&&p.grid)for(let s=0;s<16;s++)for(let i=0;i<16;i++){e.grid[s][i]=!!(p.grid[s]&&p.grid[s][i]);if(p.locks&&p.locks[s]&&p.locks[s][i])e.locks[s][i]=p.locks[s][i];if(p.retrig&&p.retrig[s]&&p.retrig[s][i])e.retrig[s][i]=p.retrig[s][i]}return e});
+  st.chain=Array.isArray(d.chain)&&d.chain.length?d.chain.map(n=>Math.max(0,Math.min(15,n|0))):[0];
+  st.cp=st.chain[0];st.chainPos=0;st.bpm=Math.max(60,Math.min(240,+d.bpm||120));st.preset=d.preset|0;st.swing=Math.max(0,Math.min(1,+d.swing||0));
+  if(Array.isArray(d.kA)&&d.kA.length===16)st.kA=d.kA.map(Number);if(Array.isArray(d.kB)&&d.kB.length===16)st.kB=d.kB.map(Number);
+  st.fx=-1;applyFx();renderKnobs();saveSoon();renderLcd();
+}
+function readBeats(){try{return JSON.parse(localStorage.getItem("po12bs_beats")||"[]")||[]}catch(e){return[]}}
+function writeBeats(b){try{localStorage.setItem("po12bs_beats",JSON.stringify(b));return true}catch(e){return false}}
+let delArm=null;
+function renderBeats(){
+  const list=$("beatList"),beats=readBeats();list.textContent="";
+  if(!beats.length){const li=document.createElement("li");li.className="empty";li.textContent="No saved beats yet. Make a groove, name it, and save.";list.appendChild(li);return}
+  beats.forEach((b,i)=>{
+    const li=document.createElement("li");
+    const n=document.createElement("span");n.className="bn";n.textContent=b.name;
+    const d=document.createElement("span");d.className="bd";d.textContent=new Date(b.at).toLocaleDateString(undefined,{month:"short",day:"numeric"});
+    const lo=document.createElement("button");lo.className="btn";lo.type="button";lo.textContent="Load";
+    lo.onclick=()=>{try{applySnap(b.data);say("loaded "+b.name);ev("loadBeat")}catch(e){say("could not load")}};
+    const de=document.createElement("button");de.className="btn";de.type="button";de.textContent=delArm===i?"Sure?":"Delete";
+    de.onclick=()=>{if(delArm!==i){delArm=i;renderBeats();setTimeout(()=>{if(delArm===i){delArm=null;renderBeats()}},2500);return}
+      delArm=null;const bs=readBeats();bs.splice(i,1);writeBeats(bs);renderBeats()};
+    li.append(n,d,lo,de);list.appendChild(li);
+  });
+}
+$("saveForm").addEventListener("submit",e=>{
+  e.preventDefault();const inp=$("beatName");let name=inp.value.trim()||("Beat "+new Date().toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}));
+  const beats=readBeats();const ex=beats.findIndex(b=>b.name===name);const entry={name,at:Date.now(),data:snapshot()};
+  if(ex>=0)beats.splice(ex,1);beats.unshift(entry);
+  if(writeBeats(beats)){inp.value="";say("saved "+name);ev("saveBeat")}else say("save failed: browser storage is off");
+  renderBeats();
+});
+/* compact beat code: each sound row = 4 hex digits */
+function toCode(){
+  const d=snapshot(),p={};
+  d.patterns.forEach((pt,i)=>{const rows=pt.grid.map(r=>{let v=0;r.forEach((on,j)=>{if(on)v|=1<<j});return v.toString(16).padStart(4,"0")}).join("");if(/[^0]/.test(rows))p[i]=rows});
+  const r=x=>Math.round(x*100);
+  const o={v:1,b:d.bpm,s:r(d.swing),c:d.chain,a:d.kA.map(r),k:d.kB.map(r),p};
+  return "PO12-"+btoa(JSON.stringify(o)).replace(/=+$/,"");
+}
+function fromCode(code){
+  let t=code.trim().replace(/\s+/g,"");if(t.startsWith("PO12-"))t=t.slice(5);
+  const o=JSON.parse(atob(t));if(!o||o.v!==1)throw new Error("bad");
+  const pats=Array.from({length:16},emptyPattern);
+  Object.keys(o.p||{}).forEach(k=>{const i=+k,h=o.p[k];if(i<0||i>15||typeof h!=="string"||h.length!==64)return;for(let s=0;s<16;s++){const v=parseInt(h.substr(s*4,4),16);for(let j=0;j<16;j++)pats[i].grid[s][j]=!!(v&(1<<j))}});
+  const f=x=>Math.max(0,Math.min(1,(+x||50)/100));
+  return {patterns:pats,chain:o.c,bpm:o.b,preset:1,swing:Math.max(0,Math.min(1,(+o.s||0)/100)),kA:(o.a||[]).length===16?o.a.map(f):st.kA.slice(),kB:(o.k||[]).length===16?o.k.map(f):st.kB.slice()};
+}
+$("btnCopyCode").onclick=()=>{
+  const c=toCode(),ta=$("codeIn");ta.value=c;
+  const done=()=>{$("codeMsg").textContent="Copied";};
+  try{navigator.clipboard.writeText(c).then(done,()=>{ta.focus();ta.select();$("codeMsg").textContent="Selected: copy it"})}catch(e){ta.focus();ta.select();$("codeMsg").textContent="Selected: copy it"}
+};
+$("btnLoadCode").onclick=()=>{
+  try{applySnap(fromCode($("codeIn").value));$("codeMsg").textContent="Loaded";say("beat code loaded");ev("loadBeat")}
+  catch(e){$("codeMsg").textContent="That code did not work. Check it was copied in full."}
+};
+renderBeats();
+/* ---------- WAV export ---------- */
+let lastRender=null,downloadsNS=null;
+/* ask for the save capability when it is needed: window.claude can arrive after this script runs */
+async function getDownloads(){
+  if(downloadsNS)return downloadsNS;
+  
+  if(!(window.claude&&window.claude.use))return null;
+  try{downloadsNS=await window.claude.use("downloads")}catch(e){downloadsNS=null}
+  return downloadsNS;
+}
+let permsNS=null;
+async function getPerms(){if(permsNS)return permsNS;try{if(window.claude&&window.claude.use)permsNS=await window.claude.use("permissions")}catch(e){}return permsNS}
+function setStat(text,bad){const el=$("saveStat");el.textContent=text;el.classList.toggle("bad",!!bad)}
+async function checkSaving(){
+  const dl=await getDownloads();
+  if(!dl){$("permRow").hidden=true;setStat("Exports save straight to your device as a WAV file.",false);return null;
+    setStat("Saving is off because you are not signed in to Claude here. Tap Sign in at the top of the page (a free Claude account works), or open this page in the Claude app, then export again. Recording and Play render work without signing in.",true);return null}
+  const pm=await getPerms();let state=null;
+  try{if(pm)state=await pm.state("downloads")}catch(e){}
+  if(state==="denied"){$("permRow").hidden=false;setStat("Saving files was turned off for this page. Tap Allow saving files to turn it back on.",true)}
+  else{$("permRow").hidden=true;setStat("Saving is available. Exports arrive as a .zip with the WAV inside.",false)}
+  return dl;
+}
+checkSaving();
+async function doPerm(){const pm=await getPerms();if(!pm)return;try{await pm.manage()}catch(e){setStat("Could not open the permissions panel. Use the page's Permissions menu at the top of the artifact to turn saving back on.",true)}checkSaving()}
+async function renderBeat(passes){
+  const AC=window.OfflineAudioContext||window.webkitOfflineAudioContext;if(!AC)throw new Error("no offline audio");
+  const sr=44100,dur=stepDur(),chain=st.chain.length?st.chain.slice():[st.cp];
+  const steps=passes*chain.length*16,len=Math.ceil((steps*dur+1.5)*sr);
+  const off=new AC(2,len,sr);
+  const nb=off.createBuffer(1,sr,sr),nd=nb.getChannelData(0);for(let i=0;i<nd.length;i++)nd[i]=Math.random()*2-1;
+  const oBus=off.createGain(),oMaster=off.createGain(),oComp=off.createDynamicsCompressor();
+  oComp.threshold.value=-10;oComp.ratio.value=4;oMaster.gain.value=1.2;
+  oBus.connect(oMaster).connect(oComp).connect(off.destination);
+  const keep={ctx,bus,noiseBuf};
+  ctx=off;bus=oBus;noiseBuf=nb;
+  try{
+    for(let k=0;k<steps;k++){
+      const step=k%16,pat=st.patterns[chain[Math.floor(k/16)%chain.length]];
+      const t=0.02+k*dur+((step%2===1)?st.swing*dur*0.5:0);
+      for(let snd=0;snd<16;snd++){
+        if(!pat.grid[snd][step])continue;
+        const lk=pat.locks[snd][step],a=lk?lk.a:st.kA[snd],b=lk?lk.b:st.kB[snd],m=pat.retrig[snd][step]||1;
+        for(let r=0;r<m;r++)voice(snd,t+r*(dur/m),a,b);
+      }
+    }
+  }finally{ctx=keep.ctx;bus=keep.bus;noiseBuf=keep.noiseBuf}
+  return await off.startRendering();
+}
+function toWav(buf){
+  const ch=buf.numberOfChannels,n=buf.length,sr=buf.sampleRate,data=[];let peak=0;
+  for(let c=0;c<ch;c++){const d=buf.getChannelData(c);data.push(d);for(let i=0;i<n;i++){const v=Math.abs(d[i]);if(v>peak)peak=v}}
+  const gain=peak>0?0.89/peak:1;
+  const out=new ArrayBuffer(44+n*ch*2),v=new DataView(out);
+  const w=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};
+  w(0,"RIFF");v.setUint32(4,36+n*ch*2,true);w(8,"WAVE");w(12,"fmt ");v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,ch,true);
+  v.setUint32(24,sr,true);v.setUint32(28,sr*ch*2,true);v.setUint16(32,ch*2,true);v.setUint16(34,16,true);w(36,"data");v.setUint32(40,n*ch*2,true);
+  let o=44;for(let i=0;i<n;i++)for(let c=0;c<ch;c++){let x=Math.max(-1,Math.min(1,data[c][i]*gain));v.setInt16(o,x<0?x*0x8000:x*0x7fff,true);o+=2}
+  return new Uint8Array(out);
+}
+const CRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc32(u){let c=0xFFFFFFFF;for(let i=0;i<u.length;i++)c=CRC[(c^u[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0}
+function zipOne(name,bytes){
+  const nm=new TextEncoder().encode(name),crc=crc32(bytes),sz=bytes.length;
+  const lh=new DataView(new ArrayBuffer(30));lh.setUint32(0,0x04034b50,true);lh.setUint16(4,20,true);lh.setUint32(14,crc,true);lh.setUint32(18,sz,true);lh.setUint32(22,sz,true);lh.setUint16(26,nm.length,true);
+  const cd=new DataView(new ArrayBuffer(46));cd.setUint32(0,0x02014b50,true);cd.setUint16(4,20,true);cd.setUint16(6,20,true);cd.setUint32(16,crc,true);cd.setUint32(20,sz,true);cd.setUint32(24,sz,true);cd.setUint16(28,nm.length,true);
+  const cdOff=30+nm.length+sz;
+  const end=new DataView(new ArrayBuffer(22));end.setUint32(0,0x06054b50,true);end.setUint16(8,1,true);end.setUint16(10,1,true);end.setUint32(12,46+nm.length,true);end.setUint32(16,cdOff,true);
+  return new Blob([lh.buffer,nm,bytes,cd.buffer,nm,end.buffer]);
+}
+function slug(x){return (x||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40)}
+async function doExport(){
+  const btn=$("btnExport"),msgEl=$("exMsg");
+  const anyNotes=st.chain.concat([st.cp]).some(i=>st.patterns[i].grid.some(r=>r.some(Boolean)));
+  if(!anyNotes){msgEl.textContent="This pattern is empty. Add some steps or load the starter beat first.";return}
+  btn.disabled=true;msgEl.textContent="Rendering...";
+  try{
+    if(st.playing)stop();
+    const passes=+$("exLoops").value;
+    const buf=await renderBeat(passes);lastRender=buf;$("btnHear").hidden=false;
+    await saveWav(buf,"",true);
+  }catch(e){msgEl.textContent="Export did not work in this browser ("+(e&&e.message||e)+")."}
+  finally{btn.disabled=false}
+}
+async function saveWav(buf,suffix,rendered){
+  const msgEl=$("exMsg");
+  const name=(slug($("beatName").value)||("po12-beat-"+st.bpm+"bpm"))+suffix;
+  const secs=Math.round(buf.duration),what=rendered?"Rendered":"Recorded";
+  msgEl.textContent=what+" "+secs+" seconds. Waiting for Claude to open the save prompt...";
+  const dl=await getDownloads();
+  if(!dl){
+    const a=$("dlLink");if(a.dataset.url)URL.revokeObjectURL(a.dataset.url);
+    const url=URL.createObjectURL(new Blob([toWav(buf)],{type:"audio/wav"}));
+    a.href=url;a.dataset.url=url;a.download=name+".wav";a.textContent="Download "+name+".wav";a.hidden=false;
+    msgEl.textContent=what+" "+secs+" seconds. Tap the Download button to save the WAV.";
+    ev(rendered?"exportWav":"recordWav");return}
+  msgEl.textContent=what+" "+secs+" seconds. Confirm the save to download.";
+  try{
+    await dl.save({filename:name+"-wav.zip",data:zipOne(name+".wav",toWav(buf))});
+    msgEl.textContent="Saved "+name+".wav inside "+name+"-wav.zip. Unzip it to get the WAV.";
+    ev(rendered?"exportWav":"recordWav");
+  }catch(e){
+    const c=e&&e.code;
+    const M={declined:"Save cancelled. Play render still has it, and you can export again.",
+      rate_limited:"A save prompt is already open. Finish it, then try again.",
+      extension_not_enabled:"Zip files cannot be saved in this view right now. Play render still has it.",
+      rejected_extension:"This view refused the .zip file type. Play render still has it.",
+      too_large:"The file is too large to save here. Try a shorter export or recording.",
+      unavailable:"Saving is not available in this view. Play render still has it.",
+      not_granted:"Saving was not allowed for this page. Play render still has it."};
+    msgEl.textContent=(M[c]||"Saving did not work. Play render still has it.")+(c?" (code: "+c+")":" ("+(e&&e.message||"unknown error")+")");
+    checkSaving();
+  }
+}
+/* live recorder: taps the final output, FX and all */
+function recUI(on){const k=keyEls.rec;k.classList.toggle("recording",on);k.querySelector(".reclab").textContent=on?"stop":"rec";renderLcd()}
+function recClock(){if(!rec)return "";const s=Math.floor((performance.now()-rec.t0)/1000);return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")}
+function startRec(){
+  initAudio();if(!ctx){$("exMsg").textContent="Audio is not available in this browser.";return}
+  if(ctx.state!=="running")ctx.resume();
+  const node=ctx.createScriptProcessor(4096,2,2),mute=ctx.createGain();mute.gain.value=0;
+  const r={node,mute,L:[],R:[],frames:0,t0:performance.now(),timer:null,stopping:false};
+  node.onaudioprocess=e=>{const a=e.inputBuffer;r.L.push(new Float32Array(a.getChannelData(0)));r.R.push(new Float32Array(a.numberOfChannels>1?a.getChannelData(1):a.getChannelData(0)));r.frames+=a.length;if(r.frames>=ctx.sampleRate*REC_MAX&&!r.stopping)stopRec()};
+  comp.connect(node);node.connect(mute);mute.connect(ctx.destination);
+  r.timer=setInterval(renderLcd,250);
+  rec=r;recUI(true);$("exMsg").textContent="Recording. Play, punch in FX, switch patterns. Tap REC again to stop and save.";
+  if(!st.playing)start();
+  ev("recStart");
+}
+function stopRec(){
+  const r=rec;if(!r||r.stopping)return;r.stopping=true;
+  setTimeout(async()=>{ // keep 0.6s so tails ring out
+    try{comp.disconnect(r.node)}catch(e){}try{r.node.disconnect();r.mute.disconnect()}catch(e){}
+    clearInterval(r.timer);rec=null;recUI(false);
+    if(!r.frames){$("exMsg").textContent="Nothing was captured. Try again after tapping a key.";return}
+    const buf=ctx.createBuffer(2,r.frames,ctx.sampleRate);
+    let o=0;for(let i=0;i<r.L.length;i++){const n=Math.min(r.L[i].length,r.frames-o);buf.getChannelData(0).set(r.L[i].subarray(0,n),o);buf.getChannelData(1).set(r.R[i].subarray(0,n),o);o+=n}
+    lastRender=buf;$("btnHear").hidden=false;
+    await saveWav(buf,"-live",false);
+  },600);
+}
+
+function doHear(){initAudio();if(!ctx||!lastRender)return;if(st.playing)stop();const s=ctx.createBufferSource();s.buffer=lastRender;s.connect(ctx.destination);s.start()}
+document.addEventListener("click",e=>{
+  const b=e.target.closest&&e.target.closest("#btnExport,#btnHear,#btnPerm");if(!b)return;
+  try{if(b.id==="btnExport")doExport();else if(b.id==="btnHear")doHear();else doPerm()}
+  catch(err){const m=$("exMsg");if(m)m.textContent="Error: "+(err&&err.message||err)}
+});
+window.addEventListener("error",e=>{const m=$("exMsg");if(m)m.textContent="Page error: "+(e.message||"unknown")+" (line "+(e.lineno||"?")+")"});
+window.addEventListener("unhandledrejection",e=>{const m=$("exMsg");if(m)m.textContent="Page error: "+((e.reason&&e.reason.message)||e.reason||"unknown")});
+/* ---------- boot ---------- */
+load();st.playing=false;st.fx=-1;st.chainBuilding=false;st.heldStep=null;st.write=false;
+setVol();renderLcd();renderKnobs();setInterval(renderKnobs,200);openMission(firstOpen(0));requestAnimationFrame(raf);
+})();
+</script>
+
+</body>
+</html>
